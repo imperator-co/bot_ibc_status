@@ -107,21 +107,24 @@ def reinit_path_relay(ibc_route, last_tx, counter, size_queue, is_trigger):
 
 def get_ibc_status():
     print("GET IBC REMOTE")
-    routes = requests.get(url, timeout=10).json()
-    for route in routes:
-        ibc_route = list(route.keys())[0]
-        path_info = select_specific_ibc_routes(ibc_route)
-        last_tx = route[ibc_route]["last_tx"]
-        counter = route[ibc_route]["counter"]
-        size_queue = route[ibc_route]["size_queue"]
-        is_trigger = route[ibc_route]["is_trigger"]
-        if check_ibc_routes(ibc_route):
-            if path_info[ibc_route]["last_tx"] == last_tx:
-                update_ibc_routes(ibc_route, last_tx, counter, size_queue, is_trigger)
+    try:
+        routes = requests.get(url, timeout=10).json()
+        for route in routes:
+            ibc_route = list(route.keys())[0]
+            path_info = select_specific_ibc_routes(ibc_route)
+            last_tx = route[ibc_route]["last_tx"]
+            counter = route[ibc_route]["counter"]
+            size_queue = route[ibc_route]["size_queue"]
+            is_trigger = route[ibc_route]["is_trigger"]
+            if check_ibc_routes(ibc_route):
+                if path_info[ibc_route]["last_tx"] == last_tx:
+                    update_ibc_routes(ibc_route, last_tx, counter, size_queue, is_trigger)
+                else:
+                    reinit_path_relay(ibc_route, last_tx, counter, size_queue, path_info[ibc_route]["is_trigger"])
             else:
-                reinit_path_relay(ibc_route, last_tx, counter, size_queue, path_info[ibc_route]["is_trigger"])
-        else:
-            insert_ibc_routes(ibc_route, last_tx, counter, size_queue, is_trigger)
+                insert_ibc_routes(ibc_route, last_tx, counter, size_queue, is_trigger)
+    except Exception:
+        traceback.print_exc()
 
 
 async def send_message_to_channel(message):
